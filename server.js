@@ -15,7 +15,6 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 // used to store db.json data
 const dbData = []
-const newNote = []
 // ==============================MIDDLEWARE=====================================
 
 // Sets up the Express app to handle data parsing
@@ -62,17 +61,24 @@ app.post('/api/notes', (req, res) => {
     let note = req.body
 
     async function checkNote(editedNote) {
-        // console.log(note)
-        if (editedNote.id === '') {
-            console.log('-if-')
+        // if a note does not have a unique id, it is a new note.
+        if (editedNote.id === '' || editedNote.id === undefined) {
+            console.log('-new note-')
+            // assign the new note a unique id
             editedNote.id = uuidv4()
-            editedNote.push(note)
-        } else {
-            console.log('-else-')
-            const test = await readFile(editedNote)
-            const updateNote = JSON.parse(test).filter(x => x.id === editedNote.id)
+            // push the note into the global dbData array
+            dbData.push(note)
+            console.log(dbData)
+        }
+        // if the note has a unique id, it exists in the database already
+        else {
+            console.log('-existing note-')
+            // run the readDb function, and wait for the response to filter throu array to find existing note id
+            const readDataBase = await readDb(editedNote)
+            const updateNote = JSON.parse(readDataBase).filter(x => x.id === editedNote.id)
             console.log('before')
             console.log(updateNote)
+            //for the note id that matches, update the title & text to the new values
             updateNote.forEach(x => {
                 x.title = editedNote.title
                 x.text = editedNote.text
@@ -80,6 +86,7 @@ app.post('/api/notes', (req, res) => {
             console.log('after')
             console.log(updateNote)
         }
+
     }
 
     checkNote(note)
@@ -107,7 +114,7 @@ app.post('/api/notes', (req, res) => {
 // ============================================================================
 
 
-function readFile(note) {
+function readDb(note) {
     return new Promise((resolve, reject) => {
         fs.readFile("db/db.json", "utf-8", (err, data) => {
             if (err) throw err
