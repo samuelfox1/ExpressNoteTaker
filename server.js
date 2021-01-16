@@ -4,15 +4,18 @@ const { v4: uuidv4 } = require('uuid');
 
 // ==========================REQUIRED_MODULES===================================
 const fs = require('fs')
-const path = require("path")
+const path = require("path");
+const { resolve } = require("path");
 
 // ==============================VARIABLES======================================
 // CONST - define a constant reference to a value) = VALUE (basic values cannot be changed) or object (values inside objects can be changed)
 // Tells node that we are creating an "express" server
 const app = express();
 // use a dynamic port when deployed on heroku server, or static 8080 when deployed on local server
-var PORT = process.env.PORT || 8080;
-
+const PORT = process.env.PORT || 8080;
+// used to store db.json data
+const dbData = []
+const newNote = []
 // ==============================MIDDLEWARE=====================================
 
 // Sets up the Express app to handle data parsing
@@ -44,31 +47,78 @@ app.get("/notes", (req, res) => {
 
 // GET /api/notes - Should read the db.json file and return all saved notes as JSON.
 app.get("/api/notes", (req, res) => {
-    console.log('ln-47: app.get("/api/notes)')
-    // read the db.json file to get current data
+    console.log('-GET-')
     fs.readFile('db/db.json', 'utf8', (err, data) => {
         if (err) throw err
-        // parse the read data and store objects in a temp array
-        let readData = JSON.parse(data)
-        readData.forEach(element => {
-            element.id = uuidv4()
-        });
-
-        fs.writeFile('db/db.json', JSON.stringify(readData), err => {
-            if (err) throw err
-            console.log('updated')
-            res.json(readData)
-        })
+        res.json(JSON.parse(data))
     })
+
 })
 
 //---------------------POST-------------------------
 //POST /api/notes - Should receive a new note to save on the request body, add it to the db.json file, and then return the new note to the client.
-app.post('api/notes', (req, res) => {
+app.post('/api/notes', (req, res) => {
     console.log('-POST-')
+    let note = req.body
+
+    async function checkNote(editedNote) {
+        // console.log(note)
+        if (editedNote.id === '') {
+            console.log('-if-')
+            editedNote.id = uuidv4()
+            editedNote.push(note)
+        } else {
+            console.log('-else-')
+            const test = await readFile(editedNote)
+            const updateNote = JSON.parse(test).filter(x => x.id === editedNote.id)
+            console.log('before')
+            console.log(updateNote)
+            updateNote.forEach(x => {
+                x.title = editedNote.title
+                x.text = editedNote.text
+            });
+            console.log('after')
+            console.log(updateNote)
+        }
+    }
+
+    checkNote(note)
+
+
+    // // read the db.json file to get current data
+    // fs.readFile('db/db.json', 'utf8', (err, data) => {
+    //     if (err) throw err
+    //     // parse the read data and store objects in a temp array
+    //     let readData = JSON.parse(data)
+    //     console.log('test')
+    //     readData.forEach(element => {
+    //         dbData.push(element)
+    //     });
+    //     console.log(dbData)
+    //     fs.writeFile('db/db.json', JSON.stringify(dbData), err => {
+    //         if (err) throw err
+    //         console.log('updated')
+    //         res.json(dbData)
+    //     })
+    // })
+    // dbData.length = 0
 })
 
 // ============================================================================
+
+
+function readFile(note) {
+    return new Promise((resolve, reject) => {
+        fs.readFile("db/db.json", "utf-8", (err, data) => {
+            if (err) throw err
+            // console.log('note')
+            // console.log(note)
+            // console.log('reading')
+            // console.log(data)
+            resolve(data)
+        })
+    })
+}
 
 
 // ==============================LISTENER=======================================

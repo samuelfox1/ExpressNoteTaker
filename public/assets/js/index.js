@@ -6,6 +6,7 @@ const $noteList = $(".list-container .list-group");
 
 // activeNote is used to keep track of the note in the textarea
 let activeNote = {};
+let activeId = ''
 
 // A function for getting all notes from the db
 const getNotes = () => {
@@ -17,6 +18,7 @@ const getNotes = () => {
 
 // A function for saving a note to the db
 const saveNote = (note) => {
+  console.log(note)
   return $.ajax({
     url: "/api/notes",
     data: note,
@@ -35,8 +37,9 @@ const deleteNote = (id) => {
 // If there is an activeNote, display it, otherwise render empty inputs
 const renderActiveNote = () => {
   $saveNoteBtn.hide();
-  console.log(activeNote)
   if (activeNote.id != '') {
+    // if activeNote.id is not empty, track the id with active
+    activeId = activeNote.id
     $noteTitle.attr("readonly");
     $noteText.attr("readonly");
     $noteTitle.val(activeNote.title);
@@ -46,7 +49,9 @@ const renderActiveNote = () => {
     $noteText.removeAttr("readonly");
     $noteTitle.val("");
     $noteText.val("");
+    activeNote.id = ''
   }
+  console.log(activeId)
 };
 
 // Get the note data from the inputs, save it to the db and update the view
@@ -54,8 +59,9 @@ const handleNoteSave = function () {
   const newNote = {
     title: $noteTitle.val(),
     text: $noteText.val(),
+    id: activeId,
   };
-
+  console.log(activeId)
   saveNote(newNote).then(() => {
     getAndRenderNotes();
     renderActiveNote();
@@ -88,6 +94,8 @@ const handleNoteView = function () {
 // Sets the activeNote to and empty object and allows the user to enter a new note
 const handleNewNoteView = function () {
   activeNote = {};
+  activeId = ''
+  console.log(activeId)
   renderActiveNote();
 };
 
