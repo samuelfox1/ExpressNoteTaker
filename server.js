@@ -15,8 +15,6 @@ const { response } = require("express");
 const app = express();
 // use a dynamic port when deployed on heroku server, or static 8080 when deployed on local server
 const PORT = process.env.PORT || 8080;
-// used to store db.json data
-const dbData = []
 // ==============================MIDDLEWARE=====================================
 
 // Sets up the Express app to handle data parsing
@@ -64,7 +62,7 @@ app.post('/api/notes', (req, res) => {
 
     async function updateDb(note) {
         // run the readDb function, and wait for the response
-        const currentDb = await readDb(note)
+        const currentDb = await readDb()
         const parseDb = JSON.parse(currentDb)
         let newNote = true
         console.log('Current dB')
@@ -74,23 +72,25 @@ app.post('/api/notes', (req, res) => {
                 x.title = note.title
                 x.text = note.text
                 newNote = false
-                console.log('-exisiting Note, Updated-')
+                console.log('-Exisiting Note Updated-')
                 console.log(parseDb)
             }
         })
 
         if (newNote) {
             console.log('-new note-')
+            // add id number to new note
             note.id = uuidv4()
+            // add new note to front of array / top of notes list
             parseDb.unshift(note)
             console.log(parseDb)
         }
-
-        fs.writeFile('db/db.json', JSON.stringify(parseDb), err => {
-            if (err) throw err
-            console.log('-updated Db-')
-            res.json('testing response')
+        // frite the updated data to the db.json file
+        await writeDb(parseDb).then(() => {
+            console.log('-Database updated-')
+            res.json('updated')
         })
+
 
     }
     updateDb(note)
@@ -98,21 +98,54 @@ app.post('/api/notes', (req, res) => {
 
 //--------------------DELETE------------------------
 
-app.delete('/api/notes/:id')
+app.delete('/api/notes/:id', (req, res) => {
+    console.log('-DELETE-')
+
+    console.log(req.params.id)
+    let id = req.params.id
+
+    async function deletNoteFromDb(id) {
+        const currentDb = await readDb()
+        const parseDb = JSON.parse(currentDb)
+        console.log('Current dB')
+        console.log(parseDb)
+        for (let i = 0; i < parseDb.length; i++) {
+            if (parseDb[i].id === id) {
+                parseDb.splice(i, 1)
+            }
+        }
+        console.log('-Selected Note Deleted-')
+        console.log(parseDb)
+        // frite the updated data to the db.json file
+        await writeDb(parseDb).then(() => {
+            console.log('-Database updated-')
+            res.json('updated')
+        })
+    }
+
+    deletNoteFromDb(id)
+})
 
 
 // ============================================================================
 
 
-function readDb(note) {
+function readDb() {
     return new Promise((resolve, reject) => {
+        // read the db.json file and return the data
         fs.readFile('db/db.json', 'utf-8', (err, data) => {
             if (err) throw err
-            // console.log('note')
-            // console.log(note)
-            // console.log('reading')
-            // console.log(data)
             resolve(data)
+        })
+    })
+}
+
+function writeDb(updatedData) {
+    return new Promise((resolve, reject) => {
+        // write the updated data to the db.json file
+        fs.writeFile('db/db.json', JSON.stringify(updatedData), err => {
+            if (err) throw err
+            resolve()
         })
     })
 }

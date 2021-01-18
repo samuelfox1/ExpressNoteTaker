@@ -62,6 +62,8 @@ const handleNoteSave = function () {
     id: activeId,
   };
   console.log(activeId)
+  // save current note as activeNote to keep it displayed on the page after saving
+  activeNote = newNote
   saveNote(newNote).then(() => {
     getAndRenderNotes();
     renderActiveNote();
@@ -72,10 +74,11 @@ const handleNoteSave = function () {
 const handleNoteDelete = function (event) {
   // prevents the click listener for the list from being called when the button inside of it is clicked
   event.stopPropagation();
-
+  // save data of selected note
   const note = $(this).parent(".list-group-item").data();
-
+  // find the selected note by comparing id number
   if (activeNote.id === note.id) {
+    //clear the activeNote object
     activeNote = {};
   }
 
