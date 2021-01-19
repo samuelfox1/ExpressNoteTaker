@@ -1,12 +1,1 @@
-[
-    {
-        "title": "Testing 2",
-        "text": "Testing 2\n",
-        "id": "6e008477-c7fe-4c79-9889-3443c7d64db3"
-    },
-    {
-        "title": "Testing1",
-        "text": "Testing 2",
-        "id": "4a7a1cfa-4a24-4a86-b92b-e67c5fb455b0"
-    }
-]
+[{"title":"Homework","text":"[ x ] - load saved notes from database and display on page.\n[ x ] - click 'pencil' icon to create a new note.\n[ x ] -  click 'save' icon to update database with a new note or an edited note.\n[ x ] - click 'delete' icon to remove an a note.\n[ x ] - refactor code.\n[ x ] - add missing comments to code.\n[ x ] - submit assignment.\n ","id":"4a7a1cfa-4a24-4a86-b92b-e67c5fb455b0"},{"title":"New Task","text":"items go here","id":"91c5ddfb-1f32-45df-b356-d722312376f0"}]

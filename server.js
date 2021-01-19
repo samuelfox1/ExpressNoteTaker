@@ -1,161 +1,115 @@
-// ==========================REQUIRED_PACKAGES==================================
+// the express framework will be used to communicate between our front end and backend over https
 const express = require("express");
-const { v4: uuidv4 } = require('uuid');
-
-// ==========================REQUIRED_MODULES===================================
+// fs module will be used to read & write to 'db.json' file as the database
 const fs = require('fs')
+// uuid module will be used to generate uniqe id#'s for each note
+const { v4: uuidv4 } = require('uuid');
+// path module will auto-fill the file path to a specified file
 const path = require("path");
-const { resolve, parse } = require("path");
-const { Console } = require("console");
-const { response } = require("express");
-
-// ==============================VARIABLES======================================
-// CONST - define a constant reference to a value) = VALUE (basic values cannot be changed) or object (values inside objects can be changed)
 // Tells node that we are creating an "express" server
 const app = express();
 // use a dynamic port when deployed on heroku server, or static 8080 when deployed on local server
 const PORT = process.env.PORT || 8080;
-// ==============================MIDDLEWARE=====================================
-
 // Sets up the Express app to handle data parsing
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// middle ware to point towards public folder?
+// middleware to point towards public folder
 app.use(express.static('public'))
-// =============================================================================
 
+// ===============================ROUTING=======================================
 
-// ==============================ROUTER=========================================
-// The below points our server to a series of "route" files.
-// These routes give our server a "map" of how to respond when users visit or request data from various URLs.
-// =============================================================================
-
-//---------------------GET--------------------------
-// GET / - Should return the index.html file
+//----------------GET-------------------
 app.get('/', function (req, res) {
-    //respond with finding the directory and sending the 'index.html' file
+    // respond with finding the directory and sending the 'index.html' file
     res.sendFile(path.join(__dirname, 'index.html'))
 })
-
-// GET /notes - Should return the notes.html file.
 app.get("/notes", (req, res) => {
-    //respond with finding the directory and sending the 'notes.html' file
+    // respond with finding the directory and sending the 'notes.html' file
     res.sendFile(path.join(__dirname, '/public/notes.html'))
-
 })
-
-// GET /api/notes - Should read the db.json file and return all saved notes as JSON.
 app.get("/api/notes", (req, res) => {
-    console.log('-GET-')
+    // read the 'db.json' file and return the data
     fs.readFile('db/db.json', 'utf8', (err, data) => {
         if (err) throw err
         res.json(JSON.parse(data))
     })
-
 })
 
-//---------------------POST-------------------------
-//POST /api/notes - Should receive a new note to save on the request body, add it to the db.json file, and then return the new note to the client.
+//---------------POST-------------------
 app.post('/api/notes', (req, res) => {
-    console.log('-POST-')
     let note = req.body
-
+    // async function to 1.Check if note saved is new or existing. 2.Update data accordingly. 3. Save changes to 'db.json' file.
     async function updateDb(note) {
         // run the readDb function, and wait for the response
         const currentDb = await readDb()
-        const parseDb = JSON.parse(currentDb)
         let newNote = true
-        console.log('Current dB')
-        console.log(parseDb)
-        parseDb.filter(function (x) {
+        // if the id of note saved matches an id in the database, update that object.
+        currentDb.filter((x) => {
             if (x.id === note.id) {
                 x.title = note.title
                 x.text = note.text
+                //set status variable to false to skip creating a new object.
                 newNote = false
-                console.log('-Exisiting Note Updated-')
-                console.log(parseDb)
+                console.log(`Note '${note.title}' updated`)
             }
         })
-
+        // if note is new, create an id number, add object to currentDb array
         if (newNote) {
-            console.log('-new note-')
-            // add id number to new note
             note.id = uuidv4()
-            // add new note to front of array / top of notes list
-            parseDb.unshift(note)
-            console.log(parseDb)
+            currentDb.push(note)
+            console.log(`Note '${note.title}' added`)
         }
-        // frite the updated data to the db.json file
-        await writeDb(parseDb).then(() => {
-            console.log('-Database updated-')
+        // write the updated data to the db.json file
+        await writeDb(currentDb).then(() => {
             res.json('updated')
         })
-
-
     }
     updateDb(note)
 })
 
-//--------------------DELETE------------------------
-
+//--------------DELETE------------------
 app.delete('/api/notes/:id', (req, res) => {
-    console.log('-DELETE-')
-
-    console.log(req.params.id)
     let id = req.params.id
 
-    async function deletNoteFromDb(id) {
+    async function deleteNoteFromDb(id) {
         const currentDb = await readDb()
-        const parseDb = JSON.parse(currentDb)
-        console.log('Current dB')
-        console.log(parseDb)
-        for (let i = 0; i < parseDb.length; i++) {
-            if (parseDb[i].id === id) {
-                parseDb.splice(i, 1)
+        for (let i = 0; i < currentDb.length; i++) {
+            if (currentDb[i].id === id) {
+                console.log(`Note '${currentDb[i].title}' deleted`)
+                currentDb.splice(i, 1)
             }
         }
-        console.log('-Selected Note Deleted-')
-        console.log(parseDb)
-        // frite the updated data to the db.json file
-        await writeDb(parseDb).then(() => {
-            console.log('-Database updated-')
+        // write the updated data to the db.json file
+        await writeDb(currentDb).then(() => {
             res.json('updated')
         })
     }
-
-    deletNoteFromDb(id)
+    deleteNoteFromDb(id)
 })
 
-
-// ============================================================================
-
-
+// ==============================FUNCTIONS======================================
 function readDb() {
     return new Promise((resolve, reject) => {
-        // read the db.json file and return the data
+        // read the 'db.json' file and return the data
         fs.readFile('db/db.json', 'utf-8', (err, data) => {
             if (err) throw err
-            resolve(data)
+            // respond to await function
+            resolve(JSON.parse(data))
         })
     })
 }
-
 function writeDb(updatedData) {
     return new Promise((resolve, reject) => {
-        // write the updated data to the db.json file
+        // write the updated data to the 'db.json' file
         fs.writeFile('db/db.json', JSON.stringify(updatedData), err => {
             if (err) throw err
+            // respond to await function
             resolve()
         })
     })
 }
 
-
-
 // ==============================LISTENER=======================================
-// The below code effectively "starts" our server
-//listen to port 8080 for a change in the url path
 app.listen(PORT, function () {
-    console.log(`App listening on PORT: ${PORT}`);
+    console.log(`Express Note Taker listening on PORT: ${PORT}`);
 });
-// =============================================================================
