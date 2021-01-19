@@ -39,13 +39,9 @@ const renderActiveNote = () => {
   if (activeNote.id != '') {
     // if activeNote.id is not empty, track the id with active
     activeId = activeNote.id
-    $noteTitle.attr("readonly");
-    $noteText.attr("readonly");
     $noteTitle.val(activeNote.title);
     $noteText.val(activeNote.text);
   } else {
-    $noteTitle.removeAttr("readonly");
-    $noteText.removeAttr("readonly");
     $noteTitle.val("");
     $noteText.val("");
     activeNote.id = ''
