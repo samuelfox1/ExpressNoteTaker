@@ -21,7 +21,7 @@ app.use(express.static('public'))
 //----------------GET-------------------
 app.get('/', function (req, res) {
     // respond with finding the directory and sending the 'index.html' file
-    res.sendFile(path.join(__dirname, 'index.html'))
+    res.sendFile(path.join(__dirname, '/public/index.html'))
 })
 app.get("/notes", (req, res) => {
     // respond with finding the directory and sending the 'notes.html' file
